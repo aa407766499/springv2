@@ -1,0 +1,17 @@
+package com.study.springv2.beans.factory;
+
+/**
+ * IOC容器顶层接口
+ *
+ * @author Huzi114
+ * @ClassName: MyBeanFactory
+ * @Description:
+ * @date 2019/11/18 16:05
+ */
+public interface MyBeanFactory {
+
+    Object getBean(String name);
+
+    Object getBean(Class<?> requiredType);
+
+}
