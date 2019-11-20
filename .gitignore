@@ -1,0 +1,6 @@
+# Created by .ignore support plugin (hsz.mobi)
+.gitignore
+.idea/
+springv2.iml
+src/main/java/com/study/demo/
+src/main/java/com/study/springv2/core/

@@ -17,6 +17,6 @@ import java.util.concurrent.ConcurrentHashMap;
 public class MyDefaultListableBeanFactory extends MyAbstractApplicationContext {
 
     //存储配置信息的map
-    private Map<String, MyBeanDefinition> beanDefinitionMap = new ConcurrentHashMap<String, MyBeanDefinition>();
+    protected Map<String, MyBeanDefinition> beanDefinitionMap = new ConcurrentHashMap<String, MyBeanDefinition>();
 
 }
