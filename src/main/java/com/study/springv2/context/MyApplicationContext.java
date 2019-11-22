@@ -30,6 +30,8 @@ public class MyApplicationContext extends MyDefaultListableBeanFactory implement
     //单例实例缓存
     private Map<String, Object> singletonObjects = new ConcurrentHashMap<>();
 
+    private Map<String, MyBeanWrapper> factoryBeanInstanceCache = new ConcurrentHashMap<>();
+
     public MyApplicationContext(String... configLocations) {
         this.configLocations = configLocations;
     }
@@ -71,6 +73,10 @@ public class MyApplicationContext extends MyDefaultListableBeanFactory implement
             if (this.singletonObjects.containsKey(name)) {
                 return this.singletonObjects.get(name);
             }
+            //防止循环依赖
+            if (factoryBeanInstanceCache.containsKey(name)) {
+                return factoryBeanInstanceCache.get(name).getWrappedInstance();
+            }
             //缓存中不存在
             //实例化bean
             bw = instantiateBean(name, mbd);
@@ -87,11 +93,7 @@ public class MyApplicationContext extends MyDefaultListableBeanFactory implement
             //依赖注入
             populateBean(name, mbd, bw);
         }
-
-        if (bw != null) {
-            return bw.getWrappedInstance();
-        }
-        return null;
+        return bw.getWrappedInstance();
     }
 
     private MyBeanWrapper instantiateBean(String name, MyBeanDefinition mbd) {
@@ -102,7 +104,9 @@ public class MyApplicationContext extends MyDefaultListableBeanFactory implement
         try {
             Class<?> beanClass = Class.forName(className);
             Object instance = beanClass.newInstance();
-            return new MyBeanWrapper(instance);
+            MyBeanWrapper bw = new MyBeanWrapper(instance);
+            this.factoryBeanInstanceCache.put(name, bw);
+            return bw;
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -116,7 +120,7 @@ public class MyApplicationContext extends MyDefaultListableBeanFactory implement
             if (field.isAnnotationPresent(MyAutowired.class)) {
                 MyAutowired ann = field.getAnnotation(MyAutowired.class);
                 String beanName = ann.value();
-                if (!beanName.equals("")) {
+                if (!"".equals(beanName)) {
                     value = getBean(beanName);
                 } else {
                     value = getBean(field.getType());
@@ -124,7 +128,7 @@ public class MyApplicationContext extends MyDefaultListableBeanFactory implement
             }
             field.setAccessible(true);
             try {
-                field.set(bw.getWrappedInstance(),value);
+                field.set(bw.getWrappedInstance(), value);
             } catch (IllegalAccessException e) {
                 e.printStackTrace();
             }
@@ -133,11 +137,12 @@ public class MyApplicationContext extends MyDefaultListableBeanFactory implement
 
     @Override
     public Object getBean(Class<?> requiredType) {
-        return null;
+        return getBean(requiredType.getName());
     }
 
     @Override
     public void registry(MyBeanDefinition myBeanDefinition) {
         super.beanDefinitionMap.put(myBeanDefinition.getFactoryBeanName(), myBeanDefinition);
+        super.beanDefinitionMap.put(myBeanDefinition.getBeanClassName(), myBeanDefinition);
     }
 }
