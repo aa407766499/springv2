@@ -1,6 +1,6 @@
 package com.study.springv2.beans;
 
-import lombok.Getter;
+import lombok.Data;
 
 /**
  * 实例包装器
@@ -10,7 +10,7 @@ import lombok.Getter;
  * @Description:
  * @date 2019/11/20 17:11
  */
-@Getter
+@Data
 public class MyBeanWrapper {
 
     private Object wrappedInstance;

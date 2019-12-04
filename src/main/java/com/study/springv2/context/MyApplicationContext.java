@@ -5,6 +5,7 @@ import com.study.springv2.beans.MyBeanWrapper;
 import com.study.springv2.beans.factory.MyBeanFactory;
 import com.study.springv2.beans.factory.config.MyBeanDefinition;
 import com.study.springv2.beans.factory.config.MyBeanDefinitionReader;
+import com.study.springv2.beans.factory.config.MyBeanPostProcessor;
 import com.study.springv2.beans.factory.support.MyBeanDefinitionRegistry;
 import com.study.springv2.beans.factory.support.MyDefaultListableBeanFactory;
 
@@ -30,19 +31,24 @@ public class MyApplicationContext extends MyDefaultListableBeanFactory implement
     //单例实例缓存
     private Map<String, Object> singletonObjects = new ConcurrentHashMap<>();
 
-    private Map<String, MyBeanWrapper> factoryBeanInstanceCache = new ConcurrentHashMap<>();
+    public Map<String, MyBeanWrapper> factoryBeanInstanceCache = new ConcurrentHashMap<>();
 
     public MyApplicationContext(String... configLocations) {
         this.configLocations = configLocations;
+        try {
+            refresh();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     @Override
-    protected void refresh() {
+    protected void refresh() throws Exception {
         //1、定位配置文件
-        this.reader = new MyBeanDefinitionReader();
+        this.reader = new MyBeanDefinitionReader(this.configLocations);
 
         //2、加载配置文件并解析配置文件
-        List<MyBeanDefinition> myBeanDefinitions = this.reader.loadBeanDefinitions(configLocations);
+        List<MyBeanDefinition> myBeanDefinitions = this.reader.loadBeanDefinitions();
 
         //3、注册配置信息
         for (MyBeanDefinition myBeanDefinition : myBeanDefinitions) {
@@ -54,7 +60,7 @@ public class MyApplicationContext extends MyDefaultListableBeanFactory implement
 
     }
 
-    private void doAutowired() {
+    private void doAutowired() throws Exception {
         for (MyBeanDefinition myBeanDefinition : this.beanDefinitionMap.values()) {
             if (!myBeanDefinition.isLazyInit()) {
                 getBean(myBeanDefinition.getFactoryBeanName());
@@ -63,11 +69,13 @@ public class MyApplicationContext extends MyDefaultListableBeanFactory implement
     }
 
     @Override
-    public Object getBean(String name) {
+    public Object getBean(String name) throws Exception {
 
         MyBeanDefinition mbd = this.beanDefinitionMap.get(name);
 
         MyBeanWrapper bw;
+        MyBeanPostProcessor myBeanPostProcessor = new MyBeanPostProcessor();
+
         if (mbd.isSingleton()) {
             //先从缓存中获取
             if (this.singletonObjects.containsKey(name)) {
@@ -80,10 +88,12 @@ public class MyApplicationContext extends MyDefaultListableBeanFactory implement
             //缓存中不存在
             //实例化bean
             bw = instantiateBean(name, mbd);
-
+            //初始化前处理回调
+            myBeanPostProcessor.postProcessBeforeInitialization(bw.getWrappedInstance(), name);
             //依赖注入
             populateBean(name, mbd, bw);
-
+            //初始化后处理回调
+            myBeanPostProcessor.postProcessAfterInitialization(bw.getWrappedInstance(), name);
             //放入缓存
             this.singletonObjects.put(name, bw.getWrappedInstance());
         } else {
@@ -100,11 +110,9 @@ public class MyApplicationContext extends MyDefaultListableBeanFactory implement
         if (mbd == null) {
             return null;
         }
-        String className = mbd.getBeanClassName();
         try {
-            Class<?> beanClass = Class.forName(className);
-            Object instance = beanClass.newInstance();
-            MyBeanWrapper bw = new MyBeanWrapper(instance);
+            Class<?> beanClass = Class.forName(mbd.getBeanClassName());
+            MyBeanWrapper bw = new MyBeanWrapper(beanClass.newInstance());
             this.factoryBeanInstanceCache.put(name, bw);
             return bw;
         } catch (Exception e) {
@@ -113,9 +121,12 @@ public class MyApplicationContext extends MyDefaultListableBeanFactory implement
         return null;
     }
 
-    private void populateBean(String name, MyBeanDefinition mbd, MyBeanWrapper bw) {
+    private void populateBean(String name, MyBeanDefinition mbd, MyBeanWrapper bw) throws Exception {
+        if (bw == null) {
+            return;
+        }
         Class<?> beanClass = bw.getWrappedClass();
-        for (Field field : beanClass.getFields()) {
+        for (Field field : beanClass.getDeclaredFields()) {
             Object value = null;
             if (field.isAnnotationPresent(MyAutowired.class)) {
                 MyAutowired ann = field.getAnnotation(MyAutowired.class);
@@ -136,8 +147,14 @@ public class MyApplicationContext extends MyDefaultListableBeanFactory implement
     }
 
     @Override
-    public Object getBean(Class<?> requiredType) {
-        return getBean(requiredType.getName());
+    public Object getBean(Class<?> requiredType) throws Exception {
+        return getBean(toLowerFirstCase(requiredType.getSimpleName()));
+    }
+
+    private String toLowerFirstCase(String className) {
+        char[] charArray = className.toCharArray();
+        charArray[0] = (char) (charArray[0] + 32);
+        return String.valueOf(charArray);
     }
 
     @Override
@@ -145,4 +162,5 @@ public class MyApplicationContext extends MyDefaultListableBeanFactory implement
         super.beanDefinitionMap.put(myBeanDefinition.getFactoryBeanName(), myBeanDefinition);
         super.beanDefinitionMap.put(myBeanDefinition.getBeanClassName(), myBeanDefinition);
     }
+
 }

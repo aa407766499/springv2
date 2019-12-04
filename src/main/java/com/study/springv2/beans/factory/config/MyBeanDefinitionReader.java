@@ -1,5 +1,8 @@
 package com.study.springv2.beans.factory.config;
 
+import com.study.springv2.annotation.MyController;
+import com.study.springv2.annotation.MyService;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -19,22 +22,29 @@ public class MyBeanDefinitionReader {
 
     private Set<String> classNames = new HashSet<>();
 
-    public List<MyBeanDefinition> loadBeanDefinitions(String[] configLocations) {
+    public MyBeanDefinitionReader(String... configLocations) {
         String configLocation = configLocations[0];
-        List<MyBeanDefinition> myBeanDefinitions = new ArrayList<>();
         //加载配置文件
         loadConfigFile(configLocation);
         //解析配置文件
         String scanPackagePath = config.getProperty(scanPackageKey);
-        File file = new File(this.getClass().getResource("/" + castFilePath(scanPackagePath)).getPath());
-        doScan(file, scanPackagePath);
+        doScan(scanPackagePath);
+    }
+
+    public List<MyBeanDefinition> loadBeanDefinitions() throws ClassNotFoundException {
+        List<MyBeanDefinition> myBeanDefinitions = new ArrayList<>();
         for (String className : classNames) {
-            MyBeanDefinition myBeanDefinition = new MyBeanDefinition();
-            myBeanDefinition.setBeanClassName(className);
-            myBeanDefinition.setFactoryBeanName(toLowerFirstCase(className.substring(className.lastIndexOf(".")+1)));
-            myBeanDefinition.setLazyInit(false);
-            myBeanDefinition.setSingleton(true);
-            myBeanDefinitions.add(myBeanDefinition);
+            Class<?> beanClass = Class.forName(className);
+            if (beanClass.isInterface()) {
+                continue;
+            }
+            if (!(beanClass.isAnnotationPresent(MyController.class) || beanClass.isAnnotationPresent(MyService.class))) {
+                continue;
+            }
+            myBeanDefinitions.add(new MyBeanDefinition(className, toLowerFirstCase(beanClass.getSimpleName())));
+            for (Class<?> classInterface : beanClass.getInterfaces()) {
+                myBeanDefinitions.add(new MyBeanDefinition(className, toLowerFirstCase(classInterface.getSimpleName())));
+            }
         }
         return myBeanDefinitions;
     }
@@ -45,22 +55,22 @@ public class MyBeanDefinitionReader {
         return String.valueOf(charArray);
     }
 
-    private void doScan(File file, String scanPackagePath) {
-        if (file.isDirectory()) {
-            for (File listFile : file.listFiles()) {
-                doScan(listFile, scanPackagePath);
+    private void doScan(String scanPackagePath) {
+        String filePath = this.getClass().getResource("/" + scanPackagePath.replaceAll("\\.", "/")).getFile();
+        File file = new File(filePath);
+        for (File listFile : file.listFiles()) {
+            if (listFile.isDirectory()) {
+                doScan(scanPackagePath + "." + listFile.getName());
             }
-        } else {
-            String fileName = file.getName();
-            if (fileName.endsWith(".class")) {
-                String simpleClassName = fileName.substring(0, fileName.lastIndexOf("."));
-                classNames.add(scanPackagePath + "." + simpleClassName);
+            if (!listFile.getName().endsWith(".class")) {
+                continue;
             }
+            classNames.add(scanPackagePath + "." + listFile.getName().replaceAll(".class", ""));
         }
     }
 
     private void loadConfigFile(String configLocation) {
-        InputStream resourceAsStream = this.getClass().getResourceAsStream("/" + castFilePath(configLocation));
+        InputStream resourceAsStream = this.getClass().getResourceAsStream("/" + configLocation.replaceAll("classpath:", ""));
         try {
             config.load(resourceAsStream);
         } catch (IOException e) {
@@ -68,7 +78,4 @@ public class MyBeanDefinitionReader {
         }
     }
 
-    private String castFilePath(String configLocation) {
-        return configLocation.replaceAll("\\.", "/").replaceAll("/+", "/");
-    }
 }

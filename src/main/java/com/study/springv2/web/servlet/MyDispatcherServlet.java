@@ -1,14 +1,13 @@
 package com.study.springv2.web.servlet;
 
 import com.study.springv2.context.MyApplicationContext;
+import com.study.springv2.web.method.MyHandlerMethod;
 import com.study.springv2.web.servlet.mvc.method.annotation.MyRequestMappingHandlerAdapter;
 import com.study.springv2.web.servlet.mvc.method.annotation.MyRequestMappingHandlerMapping;
 
-import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
 
 /**
  * @author Huzi114
@@ -22,24 +21,56 @@ public class MyDispatcherServlet extends HttpServlet {
 
     private MyApplicationContext context;
 
+    private MyRequestMappingHandlerMapping hm;
+
+    private MyRequestMappingHandlerAdapter ha;
+
+    private MyViewResolver vr;
+
     @Override
-    protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+    protected void doGet(HttpServletRequest req, HttpServletResponse resp) {
         this.doPost(req, resp);
     }
 
     @Override
-    protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        doDispatch(req, resp);
+    protected void doPost(HttpServletRequest req, HttpServletResponse resp) {
+        try {
+            doDispatch(req, resp);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
-    private void doDispatch(HttpServletRequest req, HttpServletResponse resp) {
+    private void doDispatch(HttpServletRequest req, HttpServletResponse resp) throws Exception {
+        MyHandlerMethod mappedHandler = getHandler(req);
+        if (mappedHandler == null) {
+            return;
+        }
+        MyRequestMappingHandlerAdapter ha = getHandlerAdapter(mappedHandler);
+        if (ha == null) {
+            return;
+        }
+        MyModelAndView mv = ha.handler(req, resp, mappedHandler);
+        MyView myView = vr.resolveViewName(mv.getViewName(), null);
+        myView.render(mv.getModel(), req, resp);
+    }
 
+    private MyHandlerMethod getHandler(HttpServletRequest req) {
+        return hm.getHandler(req);
+    }
+
+    private MyRequestMappingHandlerAdapter getHandlerAdapter(MyHandlerMethod mappedHandler) {
+        if (ha.supports(mappedHandler)) {
+            return ha;
+        }
+        return null;
     }
 
     @Override
-    public void init() throws ServletException {
+    public void init() {
         String contextConfigLocation = this.getServletConfig().getInitParameter(CONTEXT_CONFIG_LOCATION);
-        MyApplicationContext context = new MyApplicationContext(contextConfigLocation);
+        MyApplicationContext context = null;
+        context = new MyApplicationContext(contextConfigLocation);
         this.context = context;
         onRefresh(context);
     }
@@ -83,15 +114,15 @@ public class MyDispatcherServlet extends HttpServlet {
     }
 
     private void initHandlerMappings(MyApplicationContext context) {
-        MyRequestMappingHandlerMapping hm = new MyRequestMappingHandlerMapping();
+        hm = new MyRequestMappingHandlerMapping(context);
     }
 
     private void initHandlerAdapters(MyApplicationContext context) {
-        MyRequestMappingHandlerAdapter ha = new MyRequestMappingHandlerAdapter();
+        ha = new MyRequestMappingHandlerAdapter();
     }
 
     private void initHandlerExceptionResolvers(MyApplicationContext context) {
-
+        vr = new MyViewResolver();
     }
 
     private void initRequestToViewNameTranslator(MyApplicationContext context) {
@@ -99,6 +130,7 @@ public class MyDispatcherServlet extends HttpServlet {
     }
 
     private void initViewResolvers(MyApplicationContext context) {
+
     }
 
     private void initFlashMapManager(MyApplicationContext context) {

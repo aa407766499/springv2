@@ -10,7 +10,7 @@ package com.study.springv2.context.support;
  */
 public abstract class MyAbstractApplicationContext {
 
-    protected void refresh() {
+    protected void refresh() throws Exception {
 
     }
 

@@ -10,8 +10,8 @@ package com.study.springv2.beans.factory;
  */
 public interface MyBeanFactory {
 
-    Object getBean(String name);
+    Object getBean(String name) throws Exception;
 
-    Object getBean(Class<?> requiredType);
+    Object getBean(Class<?> requiredType) throws Exception;
 
 }
