@@ -31,6 +31,10 @@ public class MyBeanDefinitionReader {
         doScan(scanPackagePath);
     }
 
+    public Properties getConfig() {
+        return config;
+    }
+
     public List<MyBeanDefinition> loadBeanDefinitions() throws ClassNotFoundException {
         List<MyBeanDefinition> myBeanDefinitions = new ArrayList<>();
         for (String className : classNames) {

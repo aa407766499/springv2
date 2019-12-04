@@ -1,5 +1,7 @@
 package com.study.springv2.beans.factory;
 
+import java.util.List;
+
 /**
  * IOC容器顶层接口
  *
@@ -14,4 +16,5 @@ public interface MyBeanFactory {
 
     Object getBean(Class<?> requiredType) throws Exception;
 
+    List<String> getBeanDefinitionNames();
 }

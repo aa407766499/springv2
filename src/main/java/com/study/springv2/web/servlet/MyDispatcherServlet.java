@@ -51,6 +51,13 @@ public class MyDispatcherServlet extends HttpServlet {
             return;
         }
         MyModelAndView mv = ha.handler(req, resp, mappedHandler);
+        if (mv == null) {
+            return;
+        }
+        processDispatchResult(req, resp, mv);
+    }
+
+    private void processDispatchResult(HttpServletRequest req, HttpServletResponse resp, MyModelAndView mv) throws Exception {
         MyView myView = vr.resolveViewName(mv.getViewName(), null);
         myView.render(mv.getModel(), req, resp);
     }
@@ -69,9 +76,7 @@ public class MyDispatcherServlet extends HttpServlet {
     @Override
     public void init() {
         String contextConfigLocation = this.getServletConfig().getInitParameter(CONTEXT_CONFIG_LOCATION);
-        MyApplicationContext context = null;
-        context = new MyApplicationContext(contextConfigLocation);
-        this.context = context;
+        this.context = new MyApplicationContext(contextConfigLocation);
         onRefresh(context);
     }
 
@@ -122,7 +127,7 @@ public class MyDispatcherServlet extends HttpServlet {
     }
 
     private void initHandlerExceptionResolvers(MyApplicationContext context) {
-        vr = new MyViewResolver();
+        vr = new MyViewResolver(context.getConfig().getProperty("templateRootDir"));
     }
 
     private void initRequestToViewNameTranslator(MyApplicationContext context) {

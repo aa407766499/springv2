@@ -1,9 +1,6 @@
 package com.study.springv2.web.servlet;
 
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.InputStreamReader;
 import java.util.Locale;
 
 /**
@@ -19,18 +16,17 @@ public class MyViewResolver {
     //默认文件后缀
     private String defaultFileSuffix = ".html";
 
+    //静态文件存放的目录
+    private String templateRootDir;
+
+    public MyViewResolver(String templateRootDir) {
+        this.templateRootDir = templateRootDir;
+    }
+
     public MyView resolveViewName(String viewName, Locale locale) throws Exception {
-        File content = new File(this.getClass().getResource("/" + viewName + defaultFileSuffix).getFile());
-        BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(content)));
-        StringBuilder sb = new StringBuilder();
-        String line;
-        while ((line = br.readLine()) != null) {
-            sb.append(line);
-        }
-        br.close();
-        MyView myView = new MyView();
-        myView.setContent(sb.toString());
-        return myView;
+        String viewFileName = viewName.endsWith(defaultFileSuffix) ? viewName : viewName + defaultFileSuffix;
+        File content = new File(this.getClass().getResource("/" + templateRootDir + "/" + viewFileName).getFile());
+        return new MyView(content);
     }
 
 }

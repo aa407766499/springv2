@@ -10,8 +10,10 @@ import com.study.springv2.beans.factory.support.MyBeanDefinitionRegistry;
 import com.study.springv2.beans.factory.support.MyDefaultListableBeanFactory;
 
 import java.lang.reflect.Field;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -40,6 +42,10 @@ public class MyApplicationContext extends MyDefaultListableBeanFactory implement
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    public Properties getConfig() {
+        return this.reader.getConfig();
     }
 
     @Override
@@ -149,6 +155,11 @@ public class MyApplicationContext extends MyDefaultListableBeanFactory implement
     @Override
     public Object getBean(Class<?> requiredType) throws Exception {
         return getBean(toLowerFirstCase(requiredType.getSimpleName()));
+    }
+
+    @Override
+    public List<String> getBeanDefinitionNames() {
+        return new ArrayList<>(this.factoryBeanInstanceCache.keySet());
     }
 
     private String toLowerFirstCase(String className) {
