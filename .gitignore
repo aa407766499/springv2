@@ -2,5 +2,3 @@
 .gitignore
 .idea/
 springv2.iml
-src/main/java/com/study/demo/
-src/main/java/com/study/springv2/core/

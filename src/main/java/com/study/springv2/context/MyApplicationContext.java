@@ -1,6 +1,8 @@
 package com.study.springv2.context;
 
 import com.study.springv2.annotation.MyAutowired;
+import com.study.springv2.aop.framework.MyAdvisedSupport;
+import com.study.springv2.aop.framework.MyJdkDynamicAopProxy;
 import com.study.springv2.beans.MyBeanWrapper;
 import com.study.springv2.beans.factory.MyBeanFactory;
 import com.study.springv2.beans.factory.config.MyBeanDefinition;
@@ -100,6 +102,8 @@ public class MyApplicationContext extends MyDefaultListableBeanFactory implement
             populateBean(name, mbd, bw);
             //初始化后处理回调
             myBeanPostProcessor.postProcessAfterInitialization(bw.getWrappedInstance(), name);
+            //生成代理对象
+            wrapIfNecessary(bw);
             //放入缓存
             this.singletonObjects.put(name, bw.getWrappedInstance());
         } else {
@@ -110,6 +114,12 @@ public class MyApplicationContext extends MyDefaultListableBeanFactory implement
             populateBean(name, mbd, bw);
         }
         return bw.getWrappedInstance();
+    }
+
+    private void wrapIfNecessary(MyBeanWrapper bw) {
+        if (bw.getWrappedClass().getInterfaces().length>0) {
+            bw.setWrappedInstance(new MyJdkDynamicAopProxy(new MyAdvisedSupport(bw.getWrappedInstance())).getProxy());
+        }
     }
 
     private MyBeanWrapper instantiateBean(String name, MyBeanDefinition mbd) {
