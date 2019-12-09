@@ -20,9 +20,8 @@ public class MyMethodBeforeInterceptor extends MyMethodInterceptor {
 
     @Override
     public Object invoke(MyMethodInvocation invocation) throws Throwable {
-        this.methodBeforeAdvice.before();
-        Object retVal = invocation.proceed();
-        return retVal;
+        this.methodBeforeAdvice.before(invocation.getJoinPoint());
+        return invocation.proceed();
     }
 
 }

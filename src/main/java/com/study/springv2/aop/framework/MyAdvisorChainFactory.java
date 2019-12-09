@@ -56,7 +56,7 @@ public class MyAdvisorChainFactory {
             advices.add(new MyAfterReturningInterceptor(((new MyAfterReturningAdvice(aspectInstance, adviceMethodMap.get(config.getAspectAfterReturning()))))));
         }
         if (StringUtils.isNoneBlank(config.getAspectAfterThrow())) {
-            advices.add(new MyAfterThrowingInterceptor(((new MyAfterThrowingAdvice(aspectInstance, adviceMethodMap.get(config.getAspectAfterThrow()))))));
+            advices.add(new MyAfterThrowingInterceptor(((new MyAfterThrowingAdvice(aspectInstance, adviceMethodMap.get(config.getAspectAfterThrow())))), config.getAspectAfterThrowingName()));
         }
         return advices;
     }

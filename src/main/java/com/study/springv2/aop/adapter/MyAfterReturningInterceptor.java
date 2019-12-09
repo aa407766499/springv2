@@ -21,7 +21,7 @@ public class MyAfterReturningInterceptor extends MyMethodInterceptor {
     @Override
     public Object invoke(MyMethodInvocation invocation) throws Throwable {
         Object retVal = invocation.proceed();
-        this.afterReturningAdvice.afterReturning(retVal);
+        this.afterReturningAdvice.afterReturning(invocation.getJoinPoint(), retVal);
         return retVal;
     }
 

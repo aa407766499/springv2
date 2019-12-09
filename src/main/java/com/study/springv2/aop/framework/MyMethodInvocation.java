@@ -47,7 +47,6 @@ public class MyMethodInvocation extends MyInvocation {
     @Override
     public Object proceed() {
         try {
-
             currInterceptorIndex++;
             if (currInterceptorIndex >= chain.size()) {
                 return method.invoke(target, args);
@@ -60,6 +59,10 @@ public class MyMethodInvocation extends MyInvocation {
             throwable.printStackTrace();
         }
         return null;
+    }
+
+    public MyProceedingJoinPoint getJoinPoint() {
+        return new MyProceedingJoinPoint(this.target, this.method, this.args);
     }
 
 }

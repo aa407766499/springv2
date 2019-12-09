@@ -14,6 +14,7 @@ public class TestServiceImpl implements TestService {
 
     @Override
     public String service() {
+        System.out.println("调用Service方法");
         return "test";
     }
 

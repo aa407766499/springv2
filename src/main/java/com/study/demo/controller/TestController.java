@@ -28,9 +28,7 @@ public class TestController {
 
     @MyRequestMapping("/test1")
     public void test1(HttpServletRequest request, HttpServletResponse response, @MyRequestParam("name") String name, @MyRequestParam("age") String age) {
-        String service = testService.service();
-        System.out.println(service);
-        System.out.println("age is " + age + ",name is " + name);
+        testService.service();
     }
 
     @MyRequestMapping("/test2")

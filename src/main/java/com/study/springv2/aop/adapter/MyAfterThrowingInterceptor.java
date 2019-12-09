@@ -14,19 +14,27 @@ public class MyAfterThrowingInterceptor extends MyMethodInterceptor {
 
     private MyAfterThrowingAdvice afterThrowingAdvice;
 
-    public MyAfterThrowingInterceptor(MyAfterThrowingAdvice afterThrowingAdvice) {
+    private Class<?> exception;
+
+    public MyAfterThrowingInterceptor(MyAfterThrowingAdvice afterThrowingAdvice, String aspectAfterThrowingName) {
         this.afterThrowingAdvice = afterThrowingAdvice;
+        try {
+            this.exception = Class.forName(aspectAfterThrowingName);
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace();
+        }
     }
 
     @Override
     public Object invoke(MyMethodInvocation invocation) throws Throwable {
         try {
-            Object retValue = invocation.proceed();
-            return retValue;
+            return invocation.proceed();
         } catch (Exception ex) {
-            this.afterThrowingAdvice.afterThrowing();
+            if (exception.isAssignableFrom(ex.getClass())) {
+                this.afterThrowingAdvice.afterThrowing(invocation.getJoinPoint(), ex);
+            }
+            throw ex;
         }
-        return null;
     }
 
 }

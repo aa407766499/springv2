@@ -1,5 +1,7 @@
 package com.study.springv2.aop.advice;
 
+import com.study.springv2.aop.framework.MyProceedingJoinPoint;
+
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
@@ -15,10 +17,9 @@ public class MyAfterReturningAdvice extends MyAbstractAdvice {
         super(aspectInstance, adviceMethod);
     }
 
-    public void afterReturning(Object retVal) {
+    public void afterReturning(MyProceedingJoinPoint joinPoint, Object retVal) {
         try {
-            System.out.println(retVal);
-            this.adviceMethod.invoke(aspectInstance);
+            this.adviceMethod.invoke(aspectInstance, joinPoint, retVal);
         } catch (IllegalAccessException e) {
             e.printStackTrace();
         } catch (InvocationTargetException e) {
